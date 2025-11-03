@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "sls offline start",
+    "dev": "sls offline start --stage dev",
+    "dev:setup": "node scripts/create-local-tables.js && pnpm dev",
+    "setup:tables": "node scripts/create-local-tables.js",
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -23,8 +25,8 @@
     "@types/aws-lambda": "^8.10.119",
     "@types/node": "^18.15.11",
     "@types/uuid": "^9.0.1",
-    "serverless": "^2.66.1",
-    "serverless-webpack": "^5.6.1",
+    "serverless": "^3.38.0",
+    "serverless-webpack": "^5.13.0",
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.4",
     "webpack": "^5.88.0"
@@ -35,10 +37,10 @@
     "@aws-sdk/client-s3": "^3.44.0",
     "@aws-sdk/s3-request-presigner": "^3.44.0",
     "@aws-sdk/util-dynamodb": "^3.42.0",
-    "serverless-appsync-plugin": "^1.12.1",
-    "serverless-appsync-simulator": "^0.19.2",
-    "serverless-dynamodb-local": "^0.2.40",
-    "serverless-offline": "^8.2.0",
+    "serverless-appsync-plugin": "^2.3.2",
+    "serverless-appsync-simulator": "^0.20.0",
+    "serverless-dynamodb": "^0.2.54",
+    "serverless-offline": "^13.3.3",
     "stripe": "^8.222.0",
     "uuid": "^8.3.2"
   }

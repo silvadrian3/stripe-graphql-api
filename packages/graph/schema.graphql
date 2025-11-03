@@ -1,5 +1,14 @@
-type Query {
-  hello: String
+enum Plan {
+  STARTER
+  PRO
+  PARTNER
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
 }
 
 type PlanSubscription {
@@ -7,10 +16,36 @@ type PlanSubscription {
   clientSecret: String
 }
 
-enum Plan {
-  STARTER
-  PRO
-  PARTNER
+type Subscription {
+  id: ID!
+  userId: String!
+  plan: Plan!
+  status: SubscriptionStatus!
+  stripeSubscriptionId: String
+  stripeCustomerId: String
+  startDate: String!
+  endDate: String
+  createdAt: String!
+  updatedAt: String!
+  type: String!
+}
+
+input CreateSubscriptionInput {
+  userId: String!
+  plan: Plan!
+  status: SubscriptionStatus!
+  stripeSubscriptionId: String
+  stripeCustomerId: String
+  startDate: String!
+  endDate: String
+}
+
+input UpdateSubscriptionInput {
+  id: ID!
+  plan: Plan
+  status: SubscriptionStatus
+  stripeSubscriptionId: String
+  endDate: String
 }
 
 type User {
@@ -19,6 +54,9 @@ type User {
   username: String
   email: String
   address: Address
+  createdAt: String
+  updatedAt: String
+  type: String!
 }
 
 type Address {
@@ -28,21 +66,173 @@ type Address {
   zipcode: String
 }
 
-type Post {
-  id: ID!
-  # userId: Int
-  author: User
-  title: String
-  body: String
+input AddressInput {
+  street: String
+  suite: String
+  city: String
+  zipcode: String
+}
+
+input CreateUserInput {
+  name: String!
+  username: String!
+  email: String!
+  address: AddressInput
+}
+
+# Order Types
+type OrderItem {
+  productId: String!
+  productName: String!
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+}
+
+input OrderItemInput {
+  productId: String!
+  productName: String!
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+}
+
+enum OrderStatus {
+  pending
+  paid
+  fulfilled
+  failed
+}
+
+type Order {
+  orderId: String!
+  customerId: String!
+  items: [OrderItem!]!
+  totalAmount: Float!
+  status: OrderStatus!
+  createdAt: String!
+  updatedAt: String!
+  type: String!
+}
+
+input CreateOrderInput {
+  customerId: String!
+  items: [OrderItemInput!]!
+  totalAmount: Float!
+}
+
+# Product Types
+type Product {
+  productId: String!
+  name: String!
+  description: String!
+  price: Float!
+  stockCount: Int!
+  lowStockThreshold: Int!
+  category: String!
+  isActive: Boolean!
+  createdAt: String!
+  updatedAt: String!
+  type: String!
+  lowStock: String
+}
+
+input CreateProductInput {
+  name: String!
+  description: String!
+  price: Float!
+  stockCount: Int!
+  lowStockThreshold: Int!
+  category: String!
+}
+
+input UpdateProductInput {
+  productId: String!
+  name: String
+  description: String
+  price: Float
+  stockCount: Int
+  lowStockThreshold: Int
+  category: String
+  isActive: Boolean
+}
+
+# Payment Types
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+type Payment {
+  paymentId: String!
+  orderId: String!
+  stripeChargeId: String!
+  amount: Float!
+  currency: String!
+  status: PaymentStatus!
+  failureReason: String
+  retryCount: Int!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input CreatePaymentInput {
+  orderId: String!
+  stripeChargeId: String!
+  amount: Float!
+  currency: String!
+  status: PaymentStatus!
 }
 
 type Query {
   users: [User]
-  posts: [Post]
+
+  # Subscription queries
+  getSubscription(id: ID!): Subscription
+  listSubscriptions: [Subscription]
+  getSubscriptionsByUser(userId: String!): [Subscription]
+
+  # Order queries
+  getOrder(orderId: String!): Order
+  listOrders: [Order]
+  getOrdersByCustomer(customerId: String!): [Order]
+
+  # Product queries
+  getProduct(productId: String!): Product
+  listProducts: [Product]
+  getProductsByCategory(category: String!): [Product]
+  getLowStockProducts: [Product]
+
+  # Payment queries
+  getPayment(paymentId: String!): Payment
+  getPaymentsByOrder(orderId: String!): [Payment]
+  getFailedPayments: [Payment]
 }
 
 type Mutation {
   planSubscriptionCreate(plan: Plan): PlanSubscription
+
+  # User mutations
+  createUser(input: CreateUserInput!): User
+
+  # Subscription mutations
+  createSubscription(input: CreateSubscriptionInput!): Subscription
+  updateSubscription(input: UpdateSubscriptionInput!): Subscription
+  deleteSubscription(id: ID!): Subscription
+
+  # Order mutations
+  createOrder(input: CreateOrderInput!): Order
+  updateOrderStatus(orderId: String!, status: OrderStatus!): Order
+
+  # Product mutations
+  createProduct(input: CreateProductInput!): Product
+  updateProduct(input: UpdateProductInput!): Product
+  deleteProduct(productId: String!): Product
+
+  # Payment mutations
+  createPayment(input: CreatePaymentInput!): Payment
 }
 
 schema {

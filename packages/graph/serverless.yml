@@ -1,10 +1,10 @@
-service: stripe-demo-api
+service: stripe-graphql-api
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs18.x
   region: ap-southeast-2
-  lambdaHashingVersion: 20201221
+  versionFunctions: false # Disable versioning for Lambda functions
   iam:
     role:
       statements:
@@ -30,20 +30,35 @@ provider:
           Resource: "*"
 plugins:
   - serverless-webpack
-  - serverless-dynamodb-local
+  - serverless-dynamodb
   - serverless-appsync-plugin
   - serverless-offline
   - serverless-appsync-simulator
 
 useDotenv: true
+package:
+  individually: true
 
 functions:
   query-fn:
     handler: functions/query.handler
+    environment:
+      IS_OFFLINE: ${env:IS_OFFLINE, 'false'}
+      USERS_TABLE: ${self:service}-users-${sls:stage}
+      SUBSCRIPTIONS_TABLE: ${self:service}-subscriptions-${sls:stage}
+      ORDERS_TABLE: ${self:service}-orders-${sls:stage}
+      PRODUCTS_TABLE: ${self:service}-products-${sls:stage}
+      PAYMENTS_TABLE: ${self:service}-payments-${sls:stage}
   mutation-fn:
     handler: functions/mutation.handler
     environment:
+      IS_OFFLINE: ${env:IS_OFFLINE, 'false'}
       STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
+      USERS_TABLE: ${self:service}-users-${sls:stage}
+      SUBSCRIPTIONS_TABLE: ${self:service}-subscriptions-${sls:stage}
+      ORDERS_TABLE: ${self:service}-orders-${sls:stage}
+      PRODUCTS_TABLE: ${self:service}-products-${sls:stage}
+      PAYMENTS_TABLE: ${self:service}-payments-${sls:stage}
 
 custom:
   appsync-simulator:
@@ -66,14 +81,13 @@ custom:
       port: 8000
       heapInitial: 200m
       heapMax: 1g
-      migrate: true
-      seed: true
+      migrate: false # Disabled - use manual table creation script instead
+      seed: false
       convertEmptyValues: true
-      # Uncomment only if you already have a DynamoDB running locally
-      noStart: true
+      noStart: true # We start DynamoDB via docker-compose
 
   appSync:
-    name: AppSyncStripeDemo
+    name: AppSyncStripe
     schema: schema.graphql
     authenticationType: AMAZON_COGNITO_USER_POOLS
     userPoolConfig:
@@ -82,11 +96,64 @@ custom:
     mappingTemplatesLocation: mapping-templates
 
     mappingTemplates:
+      # Mutation resolvers
       - dataSource: LambdaMutationDS
         type: Mutation
         field: planSubscriptionCreate
         request: false
         response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: createUser
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: createSubscription
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: updateSubscription
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: deleteSubscription
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: createOrder
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: updateOrderStatus
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: createProduct
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: updateProduct
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: deleteProduct
+        request: false
+        response: false
+      - dataSource: LambdaMutationDS
+        type: Mutation
+        field: createPayment
+        request: false
+        response: false
+
+      # Query resolvers
       - dataSource: LambdaQueryDS
         type: Query
         field: users
@@ -94,21 +161,71 @@ custom:
         response: false
       - dataSource: LambdaQueryDS
         type: Query
-        field: posts
+        field: getSubscription
         request: false
         response: false
       - dataSource: LambdaQueryDS
-        type: Post
-        field: author
+        type: Query
+        field: listSubscriptions
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getSubscriptionsByUser
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getOrder
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: listOrders
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getOrdersByCustomer
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getProduct
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: listProducts
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getProductsByCategory
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getLowStockProducts
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getPayment
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getPaymentsByOrder
+        request: false
+        response: false
+      - dataSource: LambdaQueryDS
+        type: Query
+        field: getFailedPayments
         request: false
         response: false
 
     dataSources:
-      - type: HTTP
-        name: HTTP_JSON_PLACEHOLDER
-        description: "JSON Placeholder REST API"
-        config:
-          endpoint: "https://jsonplaceholder.typicode.com/"
       - type: AWS_LAMBDA
         name: LambdaQueryDS
         config:
