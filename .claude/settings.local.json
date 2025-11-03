@@ -6,7 +6,14 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm list:*)",
       "Bash(pnpm type-check:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(pnpm setup:tables:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(aws dynamodb list-tables:*)",
+      "Bash(node scripts/delete-local-tables.js:*)",
+      "Bash(node scripts/create-local-tables.js:*)",
+      "Bash(node scripts/seed-users.js:*)",
+      "Bash(node scripts/migrate-add-type-field.js:*)"
     ],
     "deny": [],
     "ask": []
